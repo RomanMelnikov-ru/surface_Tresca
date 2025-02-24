@@ -54,23 +54,24 @@ def clip_by_planes(s1, s2, s3):
 fig = go.Figure()
 
 # Добавление ребер
-def add_edge(fig, s1, s2, s3, name, color):
+def add_edge(fig, s1, s2, s3, name, color, legendgroup):
     s1_clipped, s2_clipped, s3_clipped = clip_by_planes(s1, s2, s3)
     fig.add_trace(go.Scatter3d(
         x=s1_clipped, y=s2_clipped, z=s3_clipped,
         mode='lines',
         line=dict(color=color, width=1),
         name=name,
+        legendgroup=legendgroup,  # Группируем элементы
         showlegend=False  # Скрываем ребра из легенды
     ))
 
 # Ребра (все зеленые)
-add_edge(fig, edge1_s1, edge1_s2, edge1_s3, 'Ребро 1', 'green')
-add_edge(fig, edge2_s1, edge2_s2, edge2_s3, 'Ребро 2', 'green')
-add_edge(fig, edge3_s1, edge3_s2, edge3_s3, 'Ребро 3', 'green')
-add_edge(fig, edge4_s1, edge4_s2, edge4_s3, 'Ребро 4', 'green')
-add_edge(fig, edge5_s1, edge5_s2, edge5_s3, 'Ребро 5', 'green')
-add_edge(fig, edge6_s1, edge6_s2, edge6_s3, 'Ребро 6', 'green')
+add_edge(fig, edge1_s1, edge1_s2, edge1_s3, 'Ребро 1', 'green', "tresca")
+add_edge(fig, edge2_s1, edge2_s2, edge2_s3, 'Ребро 2', 'green', "tresca")
+add_edge(fig, edge3_s1, edge3_s2, edge3_s3, 'Ребро 3', 'green', "tresca")
+add_edge(fig, edge4_s1, edge4_s2, edge4_s3, 'Ребро 4', 'green', "tresca")
+add_edge(fig, edge5_s1, edge5_s2, edge5_s3, 'Ребро 5', 'green', "tresca")
+add_edge(fig, edge6_s1, edge6_s2, edge6_s3, 'Ребро 6', 'green', "tresca")
 
 # Вершины призмы (точки пересечения ребер с плоскостями)
 def get_vertices(s1, s2, s3):
@@ -102,7 +103,7 @@ vertices = [
 ]
 
 # Добавление граней через треугольные полигоны
-def add_face(fig, vertices_indices, color, opacity, name):
+def add_face(fig, vertices_indices, color, opacity, name, legendgroup):
     x = [vertices[i][0] for i in vertices_indices]
     y = [vertices[i][1] for i in vertices_indices]
     z = [vertices[i][2] for i in vertices_indices]
@@ -113,16 +114,17 @@ def add_face(fig, vertices_indices, color, opacity, name):
         k=[2, 3, 3, 0],
         color=color, opacity=opacity,
         name=name,
-        showlegend=True if name == "Поверхность Треска" else False # Показываем в легенде
+        legendgroup=legendgroup,  # Группируем элементы
+        showlegend=True if name == "Поверхность Треска" else False  # Показываем только одну запись в легенде
     ))
 
 # Грани (все зеленые, прозрачные)
-add_face(fig, [2, 3, 8, 9], 'green', 0.3, "Поверхность Треска")
-add_face(fig, [8, 9, 4, 5], 'green', 0.3, "")
-add_face(fig, [4, 5, 0, 1], 'green', 0.3, "")
-add_face(fig, [0, 1, 10, 11], 'green', 0.3, "")
-add_face(fig, [10, 11, 6, 7], 'green', 0.3, "")
-add_face(fig, [6, 7, 2, 3], 'green', 0.3, "")
+add_face(fig, [2, 3, 9, 8], 'green', 0.3, "Поверхность Треска", "tresca")
+add_face(fig, [8, 9, 5, 4], 'green', 0.3, "", "tresca")
+add_face(fig, [4, 5, 1, 0], 'green', 0.3, "", "tresca")
+add_face(fig, [1, 0, 10, 11], 'green', 0.3, "", "tresca")
+add_face(fig, [11, 10, 6, 7], 'green', 0.3, "", "tresca")
+add_face(fig, [6, 7, 3, 2], 'green', 0.3, "", "tresca")
 
 # Гидростатическая ось (sigma_1 = sigma_2 = sigma_3)
 hydrostatic_s1 = np.linspace(0, 200, 100)
@@ -136,7 +138,7 @@ fig.add_trace(go.Scatter3d(
 ))
 
 # Добавление осей из начала координат
-axis_length = 100
+axis_length = 200
 fig.add_trace(go.Scatter3d(
     x=[0, axis_length], y=[0, 0], z=[0, 0],
     mode='lines',
@@ -163,7 +165,7 @@ def plot_mises_criterion(fig, sigma_y):
     # Угол для окружности
     theta = np.linspace(0, 2 * np.pi, 100)
     # Ось цилиндра (гидростатическая ось)
-    z = np.linspace(C1 / np.sqrt(3), C2/ np.sqrt(3), 100)  # Ограничиваем цилиндр девиаторными плоскостями
+    z = np.linspace(C1 / np.sqrt(3), C2 / np.sqrt(3), 100)  # Ограничиваем цилиндр девиаторными плоскостями
     Theta, Z = np.meshgrid(theta, z)
     # Координаты цилиндра в девиаторной плоскости
     X = radius * np.cos(Theta)
@@ -196,10 +198,11 @@ fig.update_layout(
             projection=dict(type='orthographic')  # Ортогональная проекция
         )
     ),
-    title='Визуализация критерия Треска и Мизеса в пространстве главных напряжений',
+    title='Критерий Треска и Мизеса в пространстве главных напряжений',
     margin=dict(l=0, r=0, b=0, t=40),
     showlegend=True  # Показываем легенду
 )
 
 # Отображение графика в Streamlit
+st.title("Визуализация критерия Треска и Мизеса")
 st.plotly_chart(fig, use_container_width=True)
